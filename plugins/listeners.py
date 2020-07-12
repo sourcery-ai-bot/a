@@ -20,22 +20,18 @@ async def username_check(client: AssKicker, message: Message):
 
     # Group Database
     if not bool(groupDB):
-        groupDB = {}
-        groupDB["maxwarn"] = 2
-        groupDB["lang"] = "id_ID"
+        groupDB = {"maxwarn": 2, "lang": "id_ID"}
         await database.put(f"group:{chatid}", groupDB)
     lang = groupDB["lang"]
     buttonText = i18n.translate("button", lang)
     kb = [[InlineKeyboardButton(f"{buttonText}", url="https://t.me/KickUrAssBot?start=vid")]]
 
     # User Database
-    if not bool(userDB):
-        userDB = {}
-        userDB["warn"] = 1
-        userDB["lastid"] = 0
-    else:
+    if bool(userDB):
         await client.delete_messages(chatid, int(userDB["lastid"]))
 
+    else:
+        userDB = {"warn": 1, "lastid": 0}
     # Warning Section
     warnUser = int(userDB["warn"])
     maxWarn = groupDB["maxwarn"]
@@ -51,11 +47,12 @@ async def username_check(client: AssKicker, message: Message):
     event = await message.reply(
         f"{headerText}\nWarning Count {warnUser} / {maxWarn}", reply_markup=InlineKeyboardMarkup(kb)
     )
-    if not userKicked:
+    if userKicked:
+        await client.kick_members(chatid, userid)
+
+    else:
         userDB["lastid"] = event.message_id
         await database.put(f"user:{userid}", userDB)
-    else:
-        await client.kick_members(chatid, userid)
 
 
 @AssKicker.on_message(Filters.new_chat_members)
